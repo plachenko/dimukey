@@ -1,57 +1,57 @@
 <script>
-  import { Piano, onKeyDown, onKeyUp} from 'svelte-piano';
+  import { Piano, onKeyDown, onKeyUp } from "svelte-piano";
   import { onMount } from "svelte";
 
   let socket;
+  let host;
 
-  let f;
   let open = false;
   $: {
     sendSocket(
-      JSON.stringify(
-        {
-          type:'note', 
-          obj: {
-            note: $onKeyUp?.note, 
-            vel: $onKeyUp?.velocity
-          }
-        }
-      )
+      JSON.stringify({
+        type: "note",
+        obj: {
+          note: $onKeyUp?.note,
+          vel: $onKeyUp?.velocity,
+        },
+      })
     );
   }
   $: {
     sendSocket(
-      JSON.stringify(
-        {
-          type:'note', 
-          obj: {
-            note: $onKeyDown?.note, 
-            vel: $onKeyDown?.velocity
-          }
-        }
-      )
+      JSON.stringify({
+        type: "note",
+        obj: {
+          note: $onKeyDown?.note,
+          vel: $onKeyDown?.velocity,
+        },
+      })
     );
   }
   // $: console.log($onKeyDown)
 
-  function sendSocket(d){
-    if(open){
+  function sendSocket(d) {
+    if (open) {
       socket.send(d);
-
     }
   }
 
-
   onMount(() => {
-  console.log(window.location.hostname);
-    socket = new WebSocket("ws://"+window.location.hostname+":8081");
-    socket.addEventListener('open', (e) => {
+    host = window.location.hostname;
+    setSocket(host);
+  });
+
+  function setSocket(host) {
+    socket = new WebSocket("ws://" + host + ":8081");
+    socket.addEventListener("open", (e) => {
       open = true;
     });
-  });
+  }
 </script>
 
 <main>
+  <input type="text" bind:value={host} />
+  <div on:click={setSocket(host)}>connect</div>
   <Piano --width="900px" --height="300px" />
 </main>
 
