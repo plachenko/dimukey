@@ -4,13 +4,20 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^2.4.2",
     "svelte": "^4.0.5",
+    "svelte-piano": "^0.1.1",
     "vite": "^4.4.5"
+  },
+  "dependencies": {
+    "node-osc": "^9.0.1",
+    "osc": "^2.4.4",
+    "osc-js": "^2.4.0",
+    "ws": "^8.14.2"
   }
 }
