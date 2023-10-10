@@ -15,13 +15,15 @@
   let notes = [];
 
   export function addNote(note) {
+    note.left = left;
+    left += 10;
     notes = [...notes, note];
+    console.log(notes);
 
-    scrubLeft(1);
+    scrubLeft(left);
   }
 
-  function scrubLeft(amt) {
-    left += amt;
+  export function scrubLeft(amt) {
     scrubber.style.left = `${left}px`;
     scrubber.scrollIntoView();
   }
@@ -30,7 +32,7 @@
 <div class="timeline">
   <div bind:this={scrubber} class="scrubber" />
   {#each notes as note}
-    <div style="top: {note.note}px; left: {left}px;" class="note" />
+    <div style="top: {note.note}px; left: {note.left}px;" class="note" />
   {/each}
 </div>
 
@@ -39,7 +41,7 @@
     position: absolute;
     top: 0px;
     left: 0px;
-    width: 100px;
+    width: 10px;
     height: 10px;
     background-color: #f00;
   }
@@ -62,4 +64,3 @@
     top: 0px;
   }
 </style>
-

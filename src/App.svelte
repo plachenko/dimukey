@@ -17,7 +17,7 @@
     if (!note) return;
 
     if (note.velocity) {
-      tl.addNote();
+      tl.addNote(note);
     } else {
     }
 
@@ -42,6 +42,11 @@
   onMount(() => {
     host = window.location.hostname;
     setSocket(host);
+
+    window.requestAnimationFrame(() => {
+      console.log("testing.");
+    });
+
     socket.addEventListener("open", (e) => {
       open = true;
     });
