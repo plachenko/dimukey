@@ -4,35 +4,48 @@
   let scrubber;
   let left = 0;
   /*
-    onMount(() => {
-        setInterval(() => {
-           scrubLeft(1);
+  onMount(() => {
+      setInterval(() => {
+          scrubLeft(1);
 
-        }, 1000);
-    });
-    */
+      }, 1000);
+  });
+  */
 
   let notes = [];
 
   export function addNote(note) {
     note.left = left;
     left += 10;
+    note.top = 10 * (note.note % 12)
     notes = [...notes, note];
     console.log(notes);
 
     scrubLeft(left);
   }
 
+  export function setPosition(amt){
+    left = amt;
+    scrubber.style.left = amt;
+    scrubber.scrollIntoView();
+  }
+
   export function scrubLeft(amt) {
+    left = amt;
     scrubber.style.left = `${left}px`;
     scrubber.scrollIntoView();
   }
 </script>
 
 <div class="timeline">
+  <div>
+    {#each new Array(12) as row}
+      <div class="row" />
+    {/each}
+  </div>
   <div bind:this={scrubber} class="scrubber" />
   {#each notes as note}
-    <div style="top: {note.note}px; left: {note.left}px;" class="note" />
+    <div style="top: {note.top}px; left: {note.left}px;" class="note" />
   {/each}
 </div>
 
@@ -46,13 +59,22 @@
     background-color: #f00;
   }
 
+  .row{
+    height: 10px;
+    width: 100%;
+    /* background-color:#F00; */
+    border-top: #000 2px solid;
+    box-sizing: border-box;
+  }
   .timeline {
     width: 100%;
     height: 100px;
     background-color: #ccc;
     position: relative;
+    /* background: repeating-linear-gradient(#FFF, #FFF 10px, #000000 11px, #000000 12px); */
     flex: 1;
-    overflow: auto;
+    overflow-x: auto;
+    overflow-y: hidden;
   }
 
   .scrubber {
