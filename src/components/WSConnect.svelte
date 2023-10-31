@@ -179,15 +179,15 @@
         </div>
         <div class="labelGroup">
             <label for="ip">IP</label>
-            <input name="ip" id="ip" type="text" bind:value={host} />
+            <input on:focus={e => e.target.select()} name="ip" id="ip" type="text" bind:value={host} />
         </div>
         <div class="labelGroup">
             <label for="port">port</label>
-            <input name="port" id="port" type="text" bind:value={port} />
+            <input on:focus={e => e.target.select()} name="port" id="port" type="text" bind:value={port} />
         </div>
         <div class="labelGroup">
             <label for="name">name</label>
-            <input name="name" id="name" type="text" bind:value={name} />
+            <input on:focus={e => e.target.select()} name="name" id="name" type="text" bind:value={name} />
         </div>
         <!--
         <div class="labelGroup">
