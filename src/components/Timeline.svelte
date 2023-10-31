@@ -19,7 +19,6 @@
     left += 10;
     note.top = 10 * (note.note % 12)
     notes = [...notes, note];
-    console.log(notes);
 
     scrubLeft(left);
   }

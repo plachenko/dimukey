@@ -1,28 +1,23 @@
 <script>
   import { Piano, onKeyDown, onKeyUp } from "svelte-piano";
   import { onMount } from "svelte";
-  import Timeline from "./timeline.svelte";
-  import { slide } from "svelte/transition";
+  import Timeline from "./components/Timeline.svelte";
+  import WSConnect from "./components/WSConnect.svelte";
+  import Midi from './components/Midi.svelte';
 
-  let socket;
-  let open = false;
-  let host;
   let tl;
-  let tempo;
-  let pianoEl;  
-  let options={
-		polyphony: 2,
-		keys: false,
-		sound: false
-	}
+  let tempo = 120;
+  let stop = false;
+
+  let WSConnection;
+
+  let modules = []
+  let moduleSelect = 0;
 
   $: sendNote($onKeyDown);
   $: sendNote($onKeyUp);
-  $: sendTempo(tempo)
 
-  let intrv;
-
-  function sendTempo(tempo) {
+  function sendTempo() {
     if(!tempo) return;
 
     const obj = {
@@ -34,12 +29,30 @@
     sendSocket(obj);
   }
 
+  let notesDown = [];
+
   function sendNote(note) {
     if (!note) return;
 
+    note = note.detail ? note.detail : note;
+
+    let noteIdx = notesDown.indexOf(note.note);
+    // console.log(noteIdx);
+
+    if(noteIdx >= 0 || note.velocity == 0){
+      notesDown.splice(noteIdx, 1);
+      note.velocity = 0;
+    }else {
+      notesDown = [...notesDown, note.note];
+    }
+    // if(noteIdx >= 0){
+
+      // notesDown = noteIdx >= 0 ? [...notesDown, note.note] : notesDown.splice(notesDown.findIndex(e => e,1)), 1;
+    // }
+    // console.log(notesDown);
+
     if (note.velocity) {
       tl.addNote(note);
-    } else {
     }
 
     const obj = {
@@ -47,6 +60,7 @@
       obj: {
         note: note.note,
         vel: note.velocity,
+        module: modules[moduleSelect]
       },
     };
 
@@ -54,14 +68,9 @@
   }
 
   function sendSocket(d) {
-    socket.send(JSON.stringify(d));
+    if(WSConnection.status != 1) return;
+    WSConnection.socket.send(JSON.stringify(d));
   }
-
-  function setSocket(_host) {
-    socket = new WebSocket(`ws://${_host}:8081`);
-  }
-
-  let stop = false;
 
   function play(){
     tl.setPosition(0);
@@ -75,10 +84,20 @@
     }
   }
 
-  onMount(() => {
-    host = window.location.hostname;
-    setSocket(host);
+  function saveState(e){
+    modules = e.detail.modules;
+  }
 
+  function moduleChange(e){
+    console.log(e);
+    console.log(modules[moduleSelect]);
+  }
+
+  onMount(() => {
+    //TEMP:
+    WSConnection.connect();
+
+    /*
     document.addEventListener('keyup', (e)=>{
       console.log(e.code);
       switch(e.code){
@@ -87,27 +106,38 @@
           break;
       }
     })
-      
-    socket.addEventListener("message", (e)=>{
-        const dataObj = JSON.parse(e.data);
-        console.log('websock', dataObj);
-    });
-
-    socket.addEventListener("open", (e) => {
-      open = true;
-
-    });
+    */
   });
+  
 </script>
 
 <main>
+  <WSConnect on:saveState={saveState} bind:this={WSConnection} />
   <span>{tempo}</span>
-  <input type="range" bind:value={tempo} min="10" max="200" />
-  <input type="text" bind:value={host} />
-  <div on:click={setSocket(host)}>connect</div>
+  <input type="range" on:mouseup={sendTempo} bind:value={tempo} min="10" max="200" />
+  <Midi on:sendNote={(e) => sendNote(e)} />
+  <div>
+    <span>Select Module</span>
+    <select bind:value={moduleSelect} on:change={moduleChange}>
+      {#each modules as module, idx}
+      <option value={idx}>{module.name}</option>
+      {/each}
+    </select>
+  </div>
+  <!-- <input type="text" bind:value={host} /> -->
+  <!-- <div id="connect" on:click={setSocket(host)}>connect</div> -->
   <Timeline bind:this={tl} />
-  <Piano :options --width="900px" --height="300px" />
+  <Piano --width="900px" --height="300px" />
 </main>
 
 <style>
+  #connect {
+    cursor: pointer;
+    user-select: none;
+    padding: 10px;
+    border: 1px solid;
+    background-color: #0F0;
+    margin: 0px auto;
+    width: 100px;
+  }
 </style>
