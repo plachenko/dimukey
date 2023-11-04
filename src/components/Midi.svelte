@@ -16,9 +16,16 @@
             midiAllowed = true;
             navigator.requestMIDIAccess().then(onMIDISucess, onMIDIFailure);
         }
-
     });
+
     function onMIDISucess(midiAccess){
+        
+        midiAccess.onstatechange = (e) => {
+            if(e.port.type == "output") return;
+            midiObj = midiAccess;
+            listInputsAndOutputs(midiAccess);
+        }
+
         if(useAll){
             midiAccess.inputs.forEach((entry) => {
                 entry.onmidimessage = onMIDIMessage;
@@ -31,30 +38,37 @@
     }
 
     function onMIDIFailure(msg){
-      console.error(msg);
+        console.error(msg);
     }
 
     function listInputsAndOutputs(midiAccess) {
-      for (const entry of midiAccess.inputs) {
-        const input = entry[1];
-        midiInput = [...midiInput, input.name];
-      }
+        let curDevice = localStorage.getItem('curMidiDevice');
+        midiInput = ['None'];
+        for (const entry of midiAccess.inputs) {
+            const input = entry[1];
+            midiInput = [...midiInput, input.name];
+        }
+
+        if(curDevice){
+            const midiIdx = midiInput.indexOf(curDevice);
+            midiSelect =  midiIdx > 0 ? midiIdx : 0;
+        } 
     }
 
     function changeMidi(midi){
-        // console.log(midiInput);
-        if(midi < 0) return;
+        if(midi <= 0) return;
+        midi--;
 
-        let idx = midi;
-        if(idx < 0) return;
-            let inpObj = Object.fromEntries(midiObj.inputs);
-            let curInp = Object.keys(inpObj)[idx];
-            Array.from(midiObj.inputs).forEach((inp) => {
+        let inpObj = Object.fromEntries(midiObj.inputs);
+        let curInp = Object.keys(inpObj)[midi];
+        
+        Array.from(midiObj.inputs).forEach((inp) => {
             inp[1].close();
         });
 
         curDevice = inpObj[curInp];
-        // console.log(curDevice)
+        console.log(curDevice);
+        localStorage.setItem('curMidiDevice', curDevice.name);
 
         curDevice.onmidimessage = onMIDIMessage;
         // startLoggingMIDIInput(midi, idx)
@@ -62,22 +76,21 @@
 
     function onMIDIMessage(event) {
         let str = `MIDI message received at timestamp ${event.timeStamp}[${event.data.length} bytes]: `;
-        // console.log(event);
+        
         for (const character of event.data) {
             str += `0x${character.toString(16)} `;
         }
-        // console.log(str);
+
         dispatcher('sendNote', parseMidiMessage(event))
   
         // parseMidiMessage(event);
     }
 
-    function test(e){
-        // console.log('huh', e, midiSelect)
+    function midiSelectEvt(e){
         changeMidi(midiSelect);
-    }    
+    }
+
     function parseMidiMessage(message) {
-        // console.log(message.data);
         return {
             command: message.data[0] >> 4,
             channel: message.data[0] & 0xf,
@@ -90,8 +103,7 @@
 <div>
     {#if midiAllowed}
         <span>Select MIDI Device</span>
-        <select bind:value={midiSelect} on:change={test}>
-            <option value=-1>None</option>
+        <select bind:value={midiSelect} on:change={midiSelectEvt}>
             {#each midiInput as inp, idx}
             <option value={idx}>{inp}</option>
             {/each}

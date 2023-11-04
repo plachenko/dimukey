@@ -14,6 +14,10 @@
 
   let notes = [];
 
+  onMount(() => {
+    
+  })
+
   export function addNote(note) {
     note.left = left;
     left += 10;
@@ -26,13 +30,13 @@
   export function setPosition(amt){
     left = amt;
     scrubber.style.left = amt;
-    scrubber.scrollIntoView();
+    // scrubber.scrollIntoView();
   }
 
   export function scrubLeft(amt) {
     left = amt;
     scrubber.style.left = `${left}px`;
-    scrubber.scrollIntoView();
+    // scrubber.scrollIntoView();
   }
 </script>
 
@@ -46,9 +50,21 @@
   {#each notes as note}
     <div style="top: {note.top}px; left: {note.left}px;" class="note" />
   {/each}
+  <div class="moduleContainer">
+
+
+  </div>
 </div>
 
 <style>
+  .moduleContainer{
+    width: 300px;
+    height: 100%;
+    background-color:#F00;
+    position: absolute;
+    right: 0px;
+    top: 0px;
+  }
   .note {
     position: absolute;
     top: 0px;
@@ -64,8 +80,10 @@
     /* background-color:#F00; */
     border-top: #000 2px solid;
     box-sizing: border-box;
+    position: relative;
   }
   .timeline {
+    margin: 4px 0px;
     width: 100%;
     height: 100px;
     background-color: #ccc;
@@ -75,7 +93,6 @@
     overflow-x: auto;
     overflow-y: hidden;
   }
-
   .scrubber {
     background-color: #f00;
     width: 2px;

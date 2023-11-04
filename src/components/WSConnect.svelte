@@ -1,7 +1,8 @@
 <svelte:options accessors/>
 <script>
-    import { createEventDispatcher, onMount } from "svelte";
+    import { createEventDispatcher, onMount, afterUpdate } from "svelte";
     import gsap from 'gsap';
+  import { userstate } from "../userstate";
   
     export let socket;
 
@@ -15,8 +16,21 @@
     let color = (((5+Math.random())*(1<<24)|0).toString(16)).substring(0, 6);
 
     let auto = false;
+    let nameList = [
+        'horse', 
+        'guy',
+        'gal',
+        'dog',
+        'cat',
+        'chicken',
+        'god',
+        'king',
+        'queen',
+        'joker', 
+        'birthdayBoy'
+    ];
     
-    let name = "some_guy"+(~~(Math.random()*500));
+    let name = `some_${nameList[~~(Math.random()*nameList.length-1)]}${~~(Math.random()*500)}`;
     let userList = [];
 
     export let status = 0;
@@ -34,7 +48,15 @@
     onMount(() => {
         host = window.location.hostname;
         secure = window.location.protocol[4] == 's';
-        session_id = uuidv4();
+
+        // Store session id if HMR to prevent user duplication
+        if(!$userstate.socket.id){
+            session_id = uuidv4();
+            $userstate.socket.id = session_id;
+            connect();
+        }else{
+            session_id = $userstate.socket.id;
+        }
 
         window.onbeforeunload = () => {
             disconnect();
@@ -57,11 +79,7 @@
         */
     });
 
-    function setError(errTxt){
-
-    }
-
-    function disconnect(){
+    export function disconnect(){
         const obj = {
             type: "disconnect",
             obj: {
@@ -72,7 +90,7 @@
     }
 
     export function connect(){
-        if(status == 1){
+        if(status >= 1){
             disconnect();
             socket.close();
             socket = null;
@@ -91,14 +109,14 @@
             let dataObj = JSON.parse(e.data);
             switch(dataObj.type){
                 case 'connect':
-                    userList = dataObj.obj.users;
+                    if(dataObj.obj.users.length) userList = dataObj.obj.users;
                     break;
                 case 'saveState':
                     dispatcher('saveState', dataObj.obj);
                     break;
             }
-            // console.log(dataObj.obj.users, userList)
-            // userList = dataObj.obj;
+
+            console.log(userList);
         });
         
         socket.addEventListener('error', (e) => {
@@ -169,7 +187,7 @@
     <form on:submit|preventDefault={connect}>
         {#if status == 1 && userList.length}
             {#each userList as user}
-            <div class="userList" style="background-color: {user.color}">{user.name}</div>
+            <div class="userList {session_id == user.id ? 'current' : '' }" style="background-color: {user.color}">{user.name}</div>
             {/each}
         {/if}
         {#if status == 0 || status == 2}
@@ -205,6 +223,8 @@
         float: left;
         margin: 0px 3px;
         padding: 5px;
+        box-sizing: border-box;
+        border: 4px solid #000;
     }
     #errTxt{
         font-weight: bold;
@@ -247,6 +267,10 @@
             padding: 5px;
             margin-bottom: 10px;
             border-radius: 5px;
+        }
+        .current{
+            border-color: #FFF;
+            font-weight: bold;
         }
   </style>
   

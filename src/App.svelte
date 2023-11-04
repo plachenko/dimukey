@@ -5,6 +5,8 @@
   import WSConnect from "./components/WSConnect.svelte";
   import Midi from './components/Midi.svelte';
 
+  import { userstate } from "./userstate";
+
   let tl;
   let tempo = 120;
   let stop = false;
@@ -30,6 +32,16 @@
   }
 
   let notesDown = [];
+
+  function sendPanic(){
+    const obj = {
+      type: "panic",
+      obj: {
+        module: modules[moduleSelect]
+      },
+    };
+    sendSocket(obj);
+  }
 
   function sendNote(note) {
     if (!note) return;
@@ -88,15 +100,19 @@
     modules = e.detail.modules;
   }
 
+  function selectRow(idx){
+    // tl = 
+    console.log(idx);
+  }
+
   function moduleChange(e){
-    console.log(e);
     console.log(modules[moduleSelect]);
   }
 
   onMount(() => {
     //TEMP:
+    // console.log('test');
     WSConnection.connect();
-
     /*
     document.addEventListener('keyup', (e)=>{
       console.log(e.code);
@@ -116,17 +132,12 @@
   <span>{tempo}</span>
   <input type="range" on:mouseup={sendTempo} bind:value={tempo} min="10" max="200" />
   <Midi on:sendNote={(e) => sendNote(e)} />
-  <div>
-    <span>Select Module</span>
-    <select bind:value={moduleSelect} on:change={moduleChange}>
-      {#each modules as module, idx}
-      <option value={idx}>{module.name}</option>
-      {/each}
-    </select>
-  </div>
+  <!-- <input type="submit" value="panic" on:click={sendPanic}> -->
   <!-- <input type="text" bind:value={host} /> -->
   <!-- <div id="connect" on:click={setSocket(host)}>connect</div> -->
-  <Timeline bind:this={tl} />
+  {#each Array(3) as row, key}
+  <Timeline bind:this={tl} on:click={e => selectRow(key)} />
+  {/each}
   <Piano --width="900px" --height="300px" />
 </main>
 

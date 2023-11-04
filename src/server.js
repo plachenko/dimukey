@@ -18,11 +18,23 @@ wss.on('connection', (ws, req)=>{
         console.log(err);
     });
 
+    // Check URL params from the websocket URL
     let params = url.parse(req.url, {parseQueryString: true}).query;
-    connections.push({socket: ws, user: params.user, id: params.id, color: params.color});
+
+    // Check if session is already connected (HMR bug update.)
+    let connected = connections.findIndex((el) => el.id == params.id);
+    if(connected < 0){
+        console.log('not connected!');
+        connections.push({socket: ws, user: params.user, id: params.id, color: params.color});
+    } else {
+        console.log('connected...', connected);
+        connections[connected].user = params.user;
+    }
 
     socketSendAll(sendUsers())
-    ws.send(fileObj.toString())
+
+    // Send bespoke session file to the socket the connects.
+    // ws.send(fileObj.toString())
 
     ws.on('message', (data)=>{
         let dataObj = JSON.parse(data.toString());
@@ -42,6 +54,9 @@ wss.on('connection', (ws, req)=>{
                 });
                 
                 socketSendAll(sendUsers())
+                break;
+            case 'panic':
+                sendPanic(dataObj.obj.module?.name);
                 break;
             default:
                 console.log(dataObj.type);
@@ -109,6 +124,8 @@ function sendUsers(){
             users: userInfoArray
         }
     }
+
+    console.log('sending the user array...', userInfoArray);
     return JSON.stringify(connectObj);
 }
 
@@ -135,4 +152,26 @@ function sendNote(obj, addr){
     });
 
     client.send(msg);
+}
+
+function sendPanic(_addr){
+    const addr = `/bespoke/module/note/${_addr}`;
+
+    /*
+    for(let i = 0; i<140; i++){
+        const msg = new OSC.Message(addr);
+        msg.append({
+            type: 'f',
+            value: i
+        });
+
+        msg.append({
+            type: 'f',
+            value: 0
+        });
+        console.log(msg);
+        client.send(msg);
+    }
+    */
+
 }
