@@ -8,6 +8,7 @@ const client = new OSC.Client('localhost', 8082);
 const wss = new WebSocketServer({port: 8081});
 let connections = [];
 let fileObj = null;
+let currentBPM = 120;
 
 wss.on('close', (e) => {
     console.log(e);
@@ -21,39 +22,52 @@ wss.on('connection', (ws, req)=>{
     // Check URL params from the websocket URL
     let params = url.parse(req.url, {parseQueryString: true}).query;
 
+    let addr = req.socket.remoteAddress.split(':');
+    let local = false;
+    const localList = [
+        '192.168.1.5',
+        '73.16.204.255',
+        // '172.56.112.155'
+    ];
+
+    // Local connection established.
+    if(addr[2] == 1 || localList.indexOf(addr[3]+'') >= 0){
+        local = true;
+    }
+
     // Check if session is already connected (HMR bug update.)
     let connected = connections.findIndex((el) => el.id == params.id);
     if(connected < 0){
-        console.log('not connected!');
-        connections.push({socket: ws, user: params.user, id: params.id, color: params.color});
+        connections.push({socket: ws, user: params.user, id: params.id, color: params.color, local: local});
     } else {
-        console.log('connected...', connected);
         connections[connected].user = params.user;
     }
 
-    socketSendAll(sendUsers())
+    socketSendAll(sendWSUsers());
+    sendWSTempo(ws);
 
     // Send bespoke session file to the socket the connects.
-    // ws.send(fileObj.toString())
+    ws.send(fileObj.toString())
 
     ws.on('message', (data)=>{
         let dataObj = JSON.parse(data.toString());
         
         socketSendAll(JSON.stringify(dataObj));
-
         switch(dataObj.type){
             case 'tempo':
+                currentBPM = dataObj.obj.tempo;
                 sendTempo(dataObj.obj, '/bespoke/console');
                 break;
             case 'note':
-                sendNote(dataObj.obj, `/bespoke/module/note/${dataObj.obj.module?.name}`);
+                sendNote(dataObj.obj, `/bespoke/module/note/${dataObj.obj.module}`);
+                
                 break;
             case 'disconnect':
                 connections = connections.filter((e) => {
                     return e.id !== dataObj.obj.id;
                 });
                 
-                socketSendAll(sendUsers())
+                socketSendAll(sendWSUsers());
                 break;
             case 'panic':
                 sendPanic(dataObj.obj.module?.name);
@@ -109,23 +123,36 @@ function socketSendAll(data){
     });
 }
 
-function sendUsers(){
+function sendWSTempo(ws){
+    let tempoObj = { 
+        type: 'tempo',
+        obj: {
+            tempo: currentBPM
+        }
+    }
+
+    ws.send(JSON.stringify(tempoObj));
+}
+
+function sendWSUsers(){
     let userInfoArray = connections.map((e) => {
-        return {
+        let obj = {
             name: e.user,
             id: e.id,
             color: `#${e.color}`
-        }
+        };
+        if(e.local) obj.local = true;
+
+        return obj;
     });
 
-    let connectObj = {
+    let connectObj = { 
         type: 'connect',
         obj: {
             users: userInfoArray
         }
     }
 
-    console.log('sending the user array...', userInfoArray);
     return JSON.stringify(connectObj);
 }
 

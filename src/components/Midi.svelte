@@ -19,7 +19,6 @@
     });
 
     function onMIDISucess(midiAccess){
-        
         midiAccess.onstatechange = (e) => {
             if(e.port.type == "output") return;
             midiObj = midiAccess;
@@ -52,6 +51,11 @@
         if(curDevice){
             const midiIdx = midiInput.indexOf(curDevice);
             midiSelect =  midiIdx > 0 ? midiIdx : 0;
+
+            let inpObj = Object.fromEntries(midiObj.inputs);
+            let curInp = Object.keys(inpObj)[midiSelect-1];
+
+            if(inpObj[curInp]) inpObj[curInp].onmidimessage = onMIDIMessage;
         } 
     }
 
@@ -67,7 +71,6 @@
         });
 
         curDevice = inpObj[curInp];
-        console.log(curDevice);
         localStorage.setItem('curMidiDevice', curDevice.name);
 
         curDevice.onmidimessage = onMIDIMessage;

@@ -1,11 +1,20 @@
 <script>
-    import { onMount } from "svelte";
-
-    export let modules;
+    import { createEventDispatcher, onMount } from "svelte";
+    
+    export let modules = [];
     let moduleSelect = 0;
+    const dispatch = createEventDispatcher();
+
+    onMount(() => {
+        // console.log(modules);
+    })
   
     function moduleChange(){
+        dispatch('moduleChange');
+    }
 
+    export function getModule(){
+        return modules[moduleSelect];
     }
     
 </script>
@@ -22,6 +31,7 @@
 </div>
   
 <style>
+/*
 .moduleContainer{
     width: 300px;
     height: 100%;
@@ -30,5 +40,6 @@
     right: 0px;
     top: 0px;
 }
+*/
 </style>
   

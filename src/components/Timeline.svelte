@@ -1,8 +1,17 @@
+<svelte:options accessors />
+
 <script>
-  import { onMount } from "svelte";
+  import { createEventDispatcher, onMount } from "svelte";
+  import Module from './Module.svelte'
+
+  const dispatch = createEventDispatcher();
 
   let scrubber;
   let left = 0;
+  let moduleCont;
+  export let moduleName = null;
+  
+  export let modules = [];
   /*
   onMount(() => {
       setInterval(() => {
@@ -15,7 +24,7 @@
   let notes = [];
 
   onMount(() => {
-    
+    // console.log(modules);
   })
 
   export function addNote(note) {
@@ -23,14 +32,26 @@
     left += 10;
     note.top = 10 * (note.note % 12)
     notes = [...notes, note];
+  
+
+    // dispatch('noteAdded', {note: note, module: moduleName});
 
     scrubLeft(left);
+  }
+
+  function moduleChange(e){
+    moduleName = moduleCont.getModule().name;
   }
 
   export function setPosition(amt){
     left = amt;
     scrubber.style.left = amt;
     // scrubber.scrollIntoView();
+  }
+
+  function clearNotes(){
+    notes = [];
+    scrubLeft(0);
   }
 
   export function scrubLeft(amt) {
@@ -51,8 +72,8 @@
     <div style="top: {note.top}px; left: {note.left}px;" class="note" />
   {/each}
   <div class="moduleContainer">
-
-
+    <Module on:moduleChange={moduleChange} bind:this={moduleCont} {modules} />
+    <input type="button" value="clear" on:click={clearNotes} />
   </div>
 </div>
 

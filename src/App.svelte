@@ -4,6 +4,7 @@
   import Timeline from "./components/Timeline.svelte";
   import WSConnect from "./components/WSConnect.svelte";
   import Midi from './components/Midi.svelte';
+  import Module from './components/Module.svelte';
 
   import { userstate } from "./userstate";
 
@@ -57,8 +58,8 @@
     }else {
       notesDown = [...notesDown, note.note];
     }
-    // if(noteIdx >= 0){
 
+    // if(noteIdx >= 0){
       // notesDown = noteIdx >= 0 ? [...notesDown, note.note] : notesDown.splice(notesDown.findIndex(e => e,1)), 1;
     // }
     // console.log(notesDown);
@@ -72,7 +73,7 @@
       obj: {
         note: note.note,
         vel: note.velocity,
-        module: modules[moduleSelect]
+        module: tl.moduleName
       },
     };
 
@@ -96,13 +97,17 @@
     }
   }
 
+  function test(e){
+    console.log(e.detail);
+  }
+
   function saveState(e){
     modules = e.detail.modules;
   }
 
   function selectRow(idx){
     // tl = 
-    console.log(idx);
+    // console.log(idx);
   }
 
   function moduleChange(e){
@@ -111,8 +116,10 @@
 
   onMount(() => {
     //TEMP:
-    // console.log('test');
     WSConnection.connect();
+
+    // modules = [...modules];
+
     /*
     document.addEventListener('keyup', (e)=>{
       console.log(e.code);
@@ -128,15 +135,29 @@
 </script>
 
 <main>
-  <WSConnect on:saveState={saveState} bind:this={WSConnection} />
-  <span>{tempo}</span>
+  <WSConnect on:tempo={(e) => tempo = e.detail} on:saveState={saveState} bind:this={WSConnection} />
+  <span>BPM: {tempo}</span>
   <input type="range" on:mouseup={sendTempo} bind:value={tempo} min="10" max="200" />
+  <span>Swing: {swing}</span>
+  <input type="range" on:mouseup={sendSwing} bind:value={swing} min=".5" max="1" />
+  
   <Midi on:sendNote={(e) => sendNote(e)} />
+  <!--
+  <div>
+     <span>Select Module</span>
+     <select bind:value={moduleSelect} on:change={moduleChange}>
+       {#each modules as module, idx}
+       <option value={idx}>{module.name}</option>
+       {/each}
+     </select>
+  </div>     
+  -->
+
   <!-- <input type="submit" value="panic" on:click={sendPanic}> -->
   <!-- <input type="text" bind:value={host} /> -->
   <!-- <div id="connect" on:click={setSocket(host)}>connect</div> -->
   {#each Array(3) as row, key}
-  <Timeline bind:this={tl} on:click={e => selectRow(key)} />
+  <Timeline {modules} bind:this={tl} on:click={e => selectRow(key)} />
   {/each}
   <Piano --width="900px" --height="300px" />
 </main>
