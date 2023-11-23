@@ -11,6 +11,7 @@
   let tl;
   let tempo = 120;
   let stop = false;
+  let swing = .5;
 
   let WSConnection;
 
@@ -19,6 +20,10 @@
 
   $: sendNote($onKeyDown);
   $: sendNote($onKeyUp);
+
+  function sendSwing() {
+    console.log('sending');
+  }
 
   function sendTempo() {
     if(!tempo) return;

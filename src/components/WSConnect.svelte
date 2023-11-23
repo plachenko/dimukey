@@ -24,7 +24,7 @@
     let filteredUsers = [];
 
     $: connectTxt = (status == 1) ? "disconnect" : ((status == 0) ? "connect" : "connecting...");
-    // $: filteredUsers.unshift($userstate.socket.users.findIndex)
+    // $: filteredUsers = $userstate.socket.users;
 
     onMount(() => {
         host = window.location.hostname;
@@ -130,7 +130,7 @@
     <form on:submit|preventDefault={connect}>
 
         {#if status == 1 && $userstate.socket.users.length}
-            {#each filteredUsers as user}
+            {#each $userstate.socket.users as user}
             <div class="userList {session_id == user.id ? 'current' : '' } {user.local ? 'local' : ''}" style="background-color: {user.color}">{user.name}</div>
             {/each}
         {/if}
