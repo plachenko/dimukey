@@ -25,6 +25,7 @@
 
   onMount(() => {
     // console.log(modules);
+    // moduleChange();
   })
 
   export function addNote(note) {
@@ -40,6 +41,7 @@
   }
 
   function moduleChange(e){
+    dispatch('sendPanic', moduleName);
     moduleName = moduleCont.getModule().name;
   }
 
@@ -52,6 +54,10 @@
   function clearNotes(){
     notes = [];
     scrubLeft(0);
+  }
+
+  function sendPanic(){
+    dispatch('sendPanic', moduleName);
   }
 
   export function scrubLeft(amt) {
@@ -72,8 +78,12 @@
     <div style="top: {note.top}px; left: {note.left}px;" class="note" />
   {/each}
   <div class="moduleContainer">
-    <Module on:moduleChange={moduleChange} bind:this={moduleCont} {modules} />
+    <Module 
+      on:moduleChange={moduleChange} 
+      bind:this={moduleCont} 
+      {modules} />
     <input type="button" value="clear" on:click={clearNotes} />
+    <input type="button" value="panic" on:click={sendPanic} />
   </div>
 </div>
 

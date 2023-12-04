@@ -1,12 +1,14 @@
 <script>
-  import { Piano, onKeyDown, onKeyUp } from "svelte-piano";
+  import MidiParser from "midi-parser-js";
   import { onMount } from "svelte";
+  import { userstate } from "./userstate";
   import Timeline from "./components/Timeline.svelte";
   import WSConnect from "./components/WSConnect.svelte";
   import Midi from './components/Midi.svelte';
+  import AudioCanvas from "./components/audioCanvas.svelte";
   import Module from './components/Module.svelte';
+  import Keyboard from "./components/Keyboard.svelte";
 
-  import { userstate } from "./userstate";
 
   let tl;
   let tempo = 120;
@@ -18,8 +20,9 @@
   let modules = []
   let moduleSelect = 0;
 
-  $: sendNote($onKeyDown);
-  $: sendNote($onKeyUp);
+  let fr;
+
+  $: console.log(tl?.moduleName)
 
   function sendSwing() {
     console.log('sending');
@@ -39,11 +42,22 @@
 
   let notesDown = [];
 
-  function sendPanic(){
+  function sendPanic(_module = 'all'){
+    notesDown = [];
     const obj = {
       type: "panic",
       obj: {
-        module: modules[moduleSelect]
+        module: _module
+      },
+    };
+    sendSocket(obj);
+  }
+
+  function sendDisableToggle(_module = 'all'){
+    const obj = {
+      type: "disableToggle",
+      obj: {
+        module: _module
       },
     };
     sendSocket(obj);
@@ -51,6 +65,8 @@
 
   function sendNote(note) {
     if (!note) return;
+
+    console.log(note.detail);
 
     note = note.detail ? note.detail : note;
 
@@ -64,10 +80,7 @@
       notesDown = [...notesDown, note.note];
     }
 
-    // if(noteIdx >= 0){
-      // notesDown = noteIdx >= 0 ? [...notesDown, note.note] : notesDown.splice(notesDown.findIndex(e => e,1)), 1;
-    // }
-    // console.log(notesDown);
+    console.log(notesDown);
 
     if (note.velocity) {
       tl.addNote(note);
@@ -123,7 +136,9 @@
     //TEMP:
     WSConnection.connect();
 
-    // modules = [...modules];
+    MidiParser.parse(fr, (obj) => {
+      console.log(obj);
+    });
 
     /*
     document.addEventListener('keyup', (e)=>{
@@ -137,6 +152,11 @@
     */
   });
   
+  function dropEvt(e){
+    e.preventDefault();
+    e.stopPropagation();
+    console.log(e);
+  }
 </script>
 
 <main>
@@ -147,6 +167,9 @@
   <input type="range" on:mouseup={sendSwing} bind:value={swing} min=".5" max="1" />
   
   <Midi on:sendNote={(e) => sendNote(e)} />
+
+  <input bind:this={fr} type="file" />
+  
   <!--
   <div>
      <span>Select Module</span>
@@ -158,13 +181,19 @@
   </div>     
   -->
 
-  <!-- <input type="submit" value="panic" on:click={sendPanic}> -->
+  <input type="submit" value="panic" on:click={(e) => sendPanic()}>
+  <input type="submit" value="disable" on:click={(e) => sendDisableToggle()}>
   <!-- <input type="text" bind:value={host} /> -->
   <!-- <div id="connect" on:click={setSocket(host)}>connect</div> -->
   {#each Array(3) as row, key}
-  <Timeline {modules} bind:this={tl} on:click={e => selectRow(key)} />
+  <Timeline 
+    {modules} 
+    bind:this={tl}
+    on:sendPanic={(e) => sendPanic(e.detail)}
+    on:click={e => selectRow(key)} />
   {/each}
-  <Piano --width="900px" --height="300px" />
+
+  <Keyboard on:keysEvt={sendNote} />
 </main>
 
 <style>

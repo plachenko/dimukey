@@ -90,6 +90,7 @@
     }
 
     function midiSelectEvt(e){
+        dispatcher('changeMidi');
         changeMidi(midiSelect);
     }
 

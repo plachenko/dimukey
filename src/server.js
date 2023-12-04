@@ -3,12 +3,14 @@ import * as OSC from 'node-osc';
 import url from 'url';
 import { watchFile, readFile } from 'fs';
 import fs from 'fs';
+import { notemodules } from './lib/NoteModule.js';
 
 const client = new OSC.Client('localhost', 8082);
 const wss = new WebSocketServer({port: 8081});
 let connections = [];
 let fileObj = null;
 let currentBPM = 120;
+let BSKObj;
 
 wss.on('close', (e) => {
     console.log(e);
@@ -51,7 +53,6 @@ wss.on('connection', (ws, req)=>{
 
     ws.on('message', (data)=>{
         let dataObj = JSON.parse(data.toString());
-        
         socketSendAll(JSON.stringify(dataObj));
         switch(dataObj.type){
             case 'tempo':
@@ -69,8 +70,11 @@ wss.on('connection', (ws, req)=>{
                 
                 socketSendAll(sendWSUsers());
                 break;
+            case 'disableToggle':
+                sendDisable(dataObj.obj.module);
+                break;
             case 'panic':
-                sendPanic(dataObj.obj.module?.name);
+                sendPanic(dataObj.obj.module);
                 break;
             default:
                 console.log(dataObj.type);
@@ -86,7 +90,7 @@ let BSKsessionFile = `${process.cwd()}\\src\\assets\\session.bsk`;
 readFile(BSKsessionFile, {encoding: 'utf-8'}, (err, data) => {
     const objF = str => str.match(/\x00\{(.|\n)*}�/g);
     const objStr= String(objF(data)[0]).replace(/\x00/g, '').replace(/�/g, '');
-    const BSKObj = JSON.parse(objStr);
+    BSKObj = JSON.parse(objStr);
 
     fileObj = JSON.stringify({'type': 'saveState', obj: BSKObj});
 });
@@ -99,14 +103,20 @@ watchFile(BSKsessionFile, (curr, prev) => {
     readS.on('data', (chunk) => {
         chunkNum++;
        
-        if(chunkNum >= 2) return;
+        // if(chunkNum >= 2) return;
+        if(chunk.includes('tempo')){
+            // let regex = /tempo(.*?)controlseparator/;
+            // let inp = String(chunk);
+
+            // console.log(regex.exec(inp));
+        }
         file += chunk;
     });
 
     readS.on('end', (e)=>{
         const objF = str => str.match(/\x00\{(.|\n)*}�/g);
         const objStr= String(objF(file)[0]).replace(/\x00/g, '').replace(/�/g, '');
-        const BSKObj = JSON.parse(objStr);
+        BSKObj = JSON.parse(objStr);
         const sendObj = {
             type: 'saveState',
             obj: BSKObj
@@ -181,24 +191,41 @@ function sendNote(obj, addr){
     client.send(msg);
 }
 
-function sendPanic(_addr){
-    const addr = `/bespoke/module/note/${_addr}`;
+function sendDisable(_addr){
+    const modules = (_addr == 'all') ? BSKObj.modules.map(e => e.name) : [_addr];
 
-    /*
-    for(let i = 0; i<140; i++){
+    modules.forEach((e) => {
+        const addr = `/bespoke/module/enable/${e}`;
         const msg = new OSC.Message(addr);
-        msg.append({
-            type: 'f',
-            value: i
-        });
 
         msg.append({
             type: 'f',
-            value: 0
+            value: -1
         });
-        console.log(msg);
         client.send(msg);
-    }
-    */
+    });
+}
 
+function sendPanic(_addr){
+    let modTypes = notemodules.map(e => e.modName);
+    let modules = (_addr == 'all') ? BSKObj.modules.map(e => e.name) : [_addr];
+    modules = modules.filter((e) => {
+        let name = ''+e?.replace(/[^a-zA-Z]/gm,"");
+        if(modTypes.indexOf(name) >= 0 || name == 'vstplugin'){
+            return e;
+        }
+    });
+
+    modules.forEach((e) => {
+        const addr = `/bespoke/module/note/${e}`;
+
+        for(let i = 0; i < 140; i++){
+            const msg = new OSC.Message(addr);
+
+            msg.append({type: 'f', value: i});
+            msg.append({type: 'f', value: 0});
+
+            client.send(msg);
+        }
+    });
 }

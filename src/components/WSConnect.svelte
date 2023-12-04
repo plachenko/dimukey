@@ -88,7 +88,6 @@
 
         socket.addEventListener('message', (e) => {
             let dataObj = JSON.parse(e.data);
-            console.log(dataObj);
             switch(dataObj.type) {
                 case 'connect':
                     userList = dataObj.obj.users;
@@ -130,7 +129,7 @@
     <form on:submit|preventDefault={connect}>
 
         {#if status == 1 && $userstate.socket.users.length}
-            {#each $userstate.socket.users as user}
+            {#each userList as user}
             <div class="userList {session_id == user.id ? 'current' : '' } {user.local ? 'local' : ''}" style="background-color: {user.color}">{user.name}</div>
             {/each}
         {/if}
