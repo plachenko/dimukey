@@ -8,12 +8,15 @@
   import AudioCanvas from "./components/audioCanvas.svelte";
   import Module from './components/Module.svelte';
   import Keyboard from "./components/Keyboard.svelte";
+  import Synth from "./components/Synth.svelte";
 
 
   let tl;
   let tempo = 120;
   let stop = false;
   let swing = .5;
+  let kb;
+  let internalSynth;
 
   let WSConnection;
 
@@ -21,8 +24,6 @@
   let moduleSelect = 0;
 
   let fr;
-
-  $: console.log(tl?.moduleName)
 
   function sendSwing() {
     console.log('sending');
@@ -44,12 +45,14 @@
 
   function sendPanic(_module = 'all'){
     notesDown = [];
+
     const obj = {
       type: "panic",
       obj: {
         module: _module
       },
     };
+
     sendSocket(obj);
   }
 
@@ -60,6 +63,7 @@
         module: _module
       },
     };
+
     sendSocket(obj);
   }
 
@@ -71,7 +75,6 @@
     note = note.detail ? note.detail : note;
 
     let noteIdx = notesDown.indexOf(note.note);
-    // console.log(noteIdx);
 
     if(noteIdx >= 0 || note.velocity == 0){
       notesDown.splice(noteIdx, 1);
@@ -84,6 +87,11 @@
 
     if (note.velocity) {
       tl.addNote(note);
+    }
+
+    if(kb.sendToSynth){
+    console.log(kb.sendToSynth, notesDown)
+      internalSynth.playNote(notesDown);
     }
 
     const obj = {
@@ -157,6 +165,15 @@
     e.stopPropagation();
     console.log(e);
   }
+
+  function sendSynth(){
+    console.log(kb.sendToSynth);
+    if(kb.sendToSynth){
+      internalSynth.turnOn();
+    } else {
+      internalSynth.turnOff();
+    }
+  }
 </script>
 
 <main>
@@ -193,7 +210,8 @@
     on:click={e => selectRow(key)} />
   {/each}
 
-  <Keyboard on:keysEvt={sendNote} />
+  <Keyboard bind:this={kb} on:keysEvt={sendNote} on:sendSynth={sendSynth} />
+  <Synth bind:this={internalSynth} />
 </main>
 
 <style>

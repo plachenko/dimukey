@@ -2,11 +2,13 @@
     on:keydown={keyd}
     on:keyup={keyu}
 />
+<svelte:options accessors/>
 <script>
     import { createEventDispatcher, onMount } from "svelte";
     import { keyboardLayouts } from "../lib/KeyLayouts";
 
     export let numKeys = 24;
+    export let sendToSynth = false;
     let keys = [];
     let keylayoutNames = ["None", ...Object.keys(keyboardLayouts)];
     let currentLayout = 0;
@@ -103,11 +105,14 @@
     }
 
     function pUp(key){
-        pdown = false;
-        let kIdx = keysDown.findIndex(e => e.label == key.key);
+        if(keysDown.length) {
+            pdown = false;
+        }
+            let kIdx = keysDown.findIndex(e => e.label == key.key);
 
-        keysDown.splice(kIdx, 1);
-        keysDown = [...keysDown];
+            keysDown.splice(kIdx, 1);
+            keysDown = [...keysDown];
+
     }
 
     function pMv(e, key){ 
@@ -171,6 +176,11 @@
         dispatcher('keyUp');
     }
 
+    function sendToSynthEvt(){
+        sendToSynth = !sendToSynth
+        dispatcher('sendSynth', sendToSynth);
+    }
+
 </script>
 
 
@@ -178,7 +188,7 @@
 <div id="keyboardContainer">
     <div id="controls">
         <div>
-            <span>Keyboard Layout:</span>
+            <span>Keyboard:</span>
             <select bind:value={currentLayout} on:change={changeLayout}>
                 {#each keylayoutNames as layout, idx}
                 <option value={idx}>{layout}</option>
@@ -197,6 +207,9 @@
             <input type="range" bind:value={offsetKey} on:input={changeLayout} />  
         </div>
         {/if}
+        <div style={sendToSynth ? 'background-color: #F00' : ''}>
+            <input type="button" value="synth" on:click={sendToSynthEvt} />
+        </div>
     </div>
     
 
