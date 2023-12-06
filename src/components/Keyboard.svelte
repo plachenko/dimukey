@@ -14,11 +14,12 @@
     let currentLayout = 0;
     let offsetKey = 0;
     let keysDown = [];
+    let pdown = false;
 
     const dispatcher = createEventDispatcher();
 
     $: {
-        if(keysDown.length)
+        // if(keysDown.length)
         dispatcher('keysEvt', keysDown[keysDown.length-1]);
     }
 
@@ -92,11 +93,10 @@
         }
     }
 
-    let pdown = false;
-
     function pDn(key){
         pdown = true;
         keysDown = [...keysDown, key];
+        // keysDown
     }
 
     function isWhiteKey(index) {
@@ -108,17 +108,16 @@
         if(keysDown.length) {
             pdown = false;
         }
-            let kIdx = keysDown.findIndex(e => e.label == key.key);
 
-            keysDown.splice(kIdx, 1);
-            keysDown = [...keysDown];
+        let kIdx = keysDown.findIndex(e => e.label == key.key);
 
+        keysDown.splice(kIdx, 1);
+        keysDown = [...keysDown];
     }
 
     function pMv(e, key){ 
         if(pdown||e.pressure > 0){
             keysDown = [key];
-            // console.log(key);
         }
     }
 
@@ -214,7 +213,10 @@
     
 
     <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <div id="keys" on:pointerleave={pLv} on:pointerenter={pEn} on:contextmenu={(e)=>{e.preventDefault()}}>
+    <div id="keys" 
+        on:pointerleave={pLv} 
+        on:pointerenter={pEn} 
+        on:contextmenu={(e)=>{e.preventDefault()}}>
         {#each keys as key}
             <div class={`${key.type ? "black" : "white"} ${keysDown.find((e) => e.value == key.value) ? 'current' : ''}`} 
                 on:pointerdown={(e) => pDn(key)} 

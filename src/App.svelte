@@ -70,8 +70,6 @@
   function sendNote(note) {
     if (!note) return;
 
-    console.log(note.detail);
-
     note = note.detail ? note.detail : note;
 
     let noteIdx = notesDown.indexOf(note.note);
@@ -83,6 +81,7 @@
       notesDown = [...notesDown, note.note];
     }
 
+    // console.log(notesDown);
     console.log(notesDown);
 
     if (note.velocity) {
@@ -90,7 +89,7 @@
     }
 
     if(kb.sendToSynth){
-    console.log(kb.sendToSynth, notesDown)
+    // console.log(kb.sendToSynth, notesDown)
       internalSynth.playNote(notesDown);
     }
 
@@ -103,7 +102,7 @@
       },
     };
 
-    sendSocket(obj);
+    // sendSocket(obj);
   }
 
   function sendSocket(d) {
@@ -167,7 +166,7 @@
   }
 
   function sendSynth(){
-    console.log(kb.sendToSynth);
+    // console.log(kb.sendToSynth);
     if(kb.sendToSynth){
       internalSynth.turnOn();
     } else {
@@ -210,7 +209,7 @@
     on:click={e => selectRow(key)} />
   {/each}
 
-  <Keyboard bind:this={kb} on:keysEvt={sendNote} on:sendSynth={sendSynth} />
+  <Keyboard bind:this={kb} on:keysEvt={sendNote} on:sendSynth={sendSynth} on:keyUp={sendNote} />
   <Synth bind:this={internalSynth} />
 </main>
 
