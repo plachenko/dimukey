@@ -9,6 +9,7 @@
   import Module from './components/Module.svelte';
   import Keyboard from "./components/Keyboard.svelte";
   import Synth from "./components/Synth.svelte";
+  import TouchComponent from "./components/TouchComponent.svelte";
 
 
   let tl;
@@ -176,6 +177,8 @@
 </script>
 
 <main>
+  <TouchComponent />
+
   <WSConnect on:tempo={(e) => tempo = e.detail} on:saveState={saveState} bind:this={WSConnection} />
   <span>BPM: {tempo}</span>
   <input type="range" on:mouseup={sendTempo} bind:value={tempo} min="10" max="200" />
