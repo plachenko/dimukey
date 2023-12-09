@@ -54,13 +54,17 @@ wss.on('connection', (ws, req)=>{
     ws.on('message', (data)=>{
         let dataObj = JSON.parse(data.toString());
         socketSendAll(JSON.stringify(dataObj));
+
+        console.log(dataObj.obj.note)
         switch(dataObj.type){
             case 'tempo':
                 currentBPM = dataObj.obj.tempo;
                 sendTempo(dataObj.obj, '/bespoke/console');
                 break;
             case 'note':
-                sendNote(dataObj.obj, `/bespoke/module/note/${dataObj.obj.module}`);
+                if(dataObj.obj.note){
+                    sendNote(dataObj.obj, `/bespoke/module/note/${dataObj.obj.module}`);
+                }
                 
                 break;
             case 'disconnect':

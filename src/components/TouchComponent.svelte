@@ -8,11 +8,9 @@
 
     onMount(() => {
         container.addEventListener('pointermove', (e) => {
-                // console.log(e);
-                let x = e;
-                console.log(x.movementX);
             if(pointerDown){
-
+                touches[0].x = e.offsetX - radius/2;
+                touches[0].y = e.offsetY - radius/2;
             }
         });
     });
@@ -62,6 +60,10 @@
                 <span>{touchEvt.id}</span>
                 <span>{touchEvt.e.pointerType}</span>
             </div>
+            <div class="gridbox">
+                <div class="grid h"></div>
+                <div class="grid v"></div>
+            </div>
         </div>
         {/each}
     </div>
@@ -77,18 +79,33 @@
         border: 5px solid;
         position: absolute;
     }
-    #touchContainer{
-        width: 100dvw;
-        height: 100dvh;
-        z-index: 9999;
-        position: absolute;
-    }
     #touchEvtContainer{
         width: 100dvw;
         height: 100dvh;
         z-index: 9999;
         position: absolute;
+        }
+        #touchContainer{
+            width: 100dvw;
+            height: 100dvh;
+            z-index: 9999;
+            position: absolute;
+            overflow: hidden;
+            }
 
-    }
-
+            .gridbox{
+                width: 100%;
+                height: 100%;
+                position: absolute;
+                left: 0px;
+                top: 0px;
+                }
+        .grid{
+            position: absolute;
+            }
+        .v{
+            border-top: 2px solid;
+            width: 100%;
+            left: 0px;
+            }
 </style>

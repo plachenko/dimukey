@@ -103,7 +103,7 @@
       },
     };
 
-    // sendSocket(obj);
+    sendSocket(obj);
   }
 
   function sendSocket(d) {
@@ -177,7 +177,7 @@
 </script>
 
 <main>
-  <TouchComponent />
+  <!-- <TouchComponent /> -->
 
   <WSConnect on:tempo={(e) => tempo = e.detail} on:saveState={saveState} bind:this={WSConnection} />
   <span>BPM: {tempo}</span>
