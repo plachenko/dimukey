@@ -40,7 +40,7 @@
     <div>
         {#if modules.length}
             <span>Select Module</span>
-            <select bind:value={moduleSelect} on:change={moduleChange}>
+            <select bind:value={moduleSelect} on:input={moduleChange}>
             {#each modules as module, idx}
             <option value={idx}>{module.name} {#if module.name.startsWith('vstplugin')}- {module.pluginId.split('-')[1]}{/if}</option>
             {/each}
@@ -52,8 +52,6 @@
                 {/if}
             </div>
             -->
-
-
         {/if}
     </div>
 </div>

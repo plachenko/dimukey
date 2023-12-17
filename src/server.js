@@ -55,7 +55,7 @@ wss.on('connection', (ws, req)=>{
         let dataObj = JSON.parse(data.toString());
         socketSendAll(JSON.stringify(dataObj));
 
-        console.log(dataObj.obj.note)
+        console.log(dataObj.obj)
         switch(dataObj.type){
             case 'tempo':
                 currentBPM = dataObj.obj.tempo;
@@ -65,7 +65,6 @@ wss.on('connection', (ws, req)=>{
                 if(dataObj.obj.note){
                     sendNote(dataObj.obj, `/bespoke/module/note/${dataObj.obj.module}`);
                 }
-                
                 break;
             case 'disconnect':
                 connections = connections.filter((e) => {
@@ -80,6 +79,9 @@ wss.on('connection', (ws, req)=>{
             case 'panic':
                 sendPanic(dataObj.obj.module);
                 break;
+            case 'reset':
+                resetSession();
+                break;
             default:
                 console.log(dataObj.type);
                 break;
@@ -87,10 +89,10 @@ wss.on('connection', (ws, req)=>{
     });
 });
 
-
 // On Bespoke File save update output sources.
 let chunkNum = 0;
 let BSKsessionFile = `${process.cwd()}\\src\\assets\\session.bsk`;
+let BSKblankFile = `${process.cwd()}\\src\\assets\\default.bsk`;
 readFile(BSKsessionFile, {encoding: 'utf-8'}, (err, data) => {
     const objF = str => str.match(/\x00\{(.|\n)*}�/g);
     const objStr= String(objF(data)[0]).replace(/\x00/g, '').replace(/�/g, '');
@@ -130,6 +132,17 @@ watchFile(BSKsessionFile, (curr, prev) => {
         socketSendAll(fileObj);
     });
 }); 
+
+function resetSession(){
+    /*
+    fs.copyFile(BSKblankFile, BSKsessionFile, (e) => {
+        console.log(e);
+    });
+    */
+    const file = fs.readFileSync(BSKsessionFile, {encoding: 'utf8'});
+    // console.log(file);
+    fs.writeFileSync(BSKblankFile, file, {encoding: 'utf8', flag: 'w+'})
+}
 
 function socketSendAll(data){
     connections.forEach(el => {

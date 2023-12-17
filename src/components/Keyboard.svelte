@@ -9,39 +9,48 @@
 
     export let numKeys = 24;
     export let sendToSynth = false;
+    let keysDown = [];
     let keys = [];
     let keylayoutNames = ["None", ...Object.keys(keyboardLayouts)];
     let currentLayout = 0;
     let offsetKey = 0;
-    let keysDown = [];
     let pdown = false;
+    let pleave = false;
+    let kbdn = false;
 
     const dispatcher = createEventDispatcher();
 
     $: {
-        // if(keysDown.length)
-        dispatcher('keysEvt', keysDown[keysDown.length-1]);
+        console.log('keysdown', keysDown);
+        // if(keysDown.length) dispatcher('keysEvt', keysDown[keysDown.length-1]);
     }
 
     onMount(() => {
         let LSlayout = window.localStorage.getItem('keyLayout');
         currentLayout = LSlayout ? parseInt(LSlayout) : 0;
         setLayout();
-        /*
-        document.addEventListener('keydown', (e)=>{
-            e.preventDefault();
-            if(!currentLayout) return;
-            let f = keys.find((keyObj) => {
-                keyObj.label == e.key;
-            });
-            console.log(f);
-            keys.some(e.key, () =>{
-
-            });
-            console.log();
-        });
-        */
     });
+
+    export function midiNote(_e){
+        const key_offset = 59;
+        const key = _e.detail;
+        key.value = key.note - key_offset;
+
+        if(key.command !== 8 && key.command !== 9) return;
+
+        console.log('shownote', _e.detail.command);
+
+        // if note lifted up
+        if(key.command == 8){
+            let kIdx = keysDown.findIndex(e => e.value == key.value);
+            console.log(kIdx, keysDown);
+            keysDown.splice(kIdx, 1);
+            keysDown = [...keysDown];
+        }else{
+            keysDown = [...keysDown, key];
+        }
+
+    }
 
     function setLayout(){
         keys = [];
@@ -52,7 +61,8 @@
             const key = {
                 value: i+1,
                 type: true,
-                note: 60+i
+                note: 60+i,
+                velocity: 0
             };
             
             if(isWhiteKey(i)){
@@ -95,8 +105,8 @@
 
     function pDn(key){
         pdown = true;
+        console.log(key);
         keysDown = [...keysDown, key];
-        // keysDown
     }
 
     function isWhiteKey(index) {
@@ -122,6 +132,7 @@
     }
 
     function pLv(){
+        if(kbdn) return;
         pdown = false;
         keysDown = [];
     }
@@ -149,29 +160,39 @@
     function keyd(_e){
         if(_e.repeat) return;
 
-        /*
-        switch(_e.code){
-            case 'ControlLeft':
-                offsetKey--;
-                setLayout();
-                break;
-            case 'ControlRight':
-                offsetKey++;
-                setLayout();
-                break;
-        }
-        */
+        if(_e.ctrlKey){
+            let _offset = 0;
+            switch(_e.code){
+                case 'ArrowLeft':
+                    _offset = -1;
+                    setLayout();
+                    break;
+                case 'ArrowRight':
+                    _offset = 1;
+                    setLayout();
+                    break;
+            }
 
+            if((offsetKey + _offset) >= 0){
+                offsetKey += _offset;
+            }
+
+            return;
+        }
+        
         let keydn = keys.find(e => e.label == _e.key);
+        kbdn = true;
 
         if(keydn) keysDown = [...keysDown, keydn];
     }
 
     function keyu(_e){
+        if(_e.ctrlKey || _e.key == 'Control') return;
         let kIdx = keysDown.findIndex(e => e.label == _e.key);
 
         keysDown.splice(kIdx, 1);
         keysDown = [...keysDown];
+        if(keysDown.length == 0) kbdn = false;
         dispatcher('keyUp');
     }
 
@@ -210,7 +231,6 @@
             <input type="button" value="synth" on:click={sendToSynthEvt} />
         </div>
     </div>
-    
 
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div id="keys" 
@@ -221,7 +241,7 @@
             <div class={`${key.type ? "black" : "white"} ${keysDown.find((e) => e.value == key.value) ? 'current' : ''}`} 
                 on:pointerdown={(e) => pDn(key)} 
                 on:pointerup={(e) => pUp(key)} 
-                on:pointerenter={(e) => pMv(e, key)}>
+                on:pointermove={(e) => pMv(e, key)}>
                 <div class="key">
                     <span>{key.label ? key.label : ''}</span>
                 </div>
@@ -268,7 +288,7 @@
         height: 100%;
         width: 100%;
         z-index: 0;
-    }
+        }
 .current .key{
     background-color:#FF0 !important;
 }

@@ -23,7 +23,6 @@
 
   let modules = []
   let moduleSelect = 0;
-
   let fr;
 
   function sendSwing() {
@@ -43,8 +42,9 @@
   }
 
   let notesDown = [];
-
   function sendPanic(_module = 'all'){
+    if(!_module) return;
+    console.log('sending', _module);
     notesDown = [];
 
     const obj = {
@@ -72,26 +72,24 @@
     if (!note) return;
 
     note = note.detail ? note.detail : note;
+    console.log('got note', note);
 
     let noteIdx = notesDown.indexOf(note.note);
 
-    if(noteIdx >= 0 || note.velocity == 0){
+    if(noteIdx >= 0){
       notesDown.splice(noteIdx, 1);
       note.velocity = 0;
     }else {
       notesDown = [...notesDown, note.note];
     }
 
-    // console.log(notesDown);
-    console.log(notesDown);
-
     if (note.velocity) {
       tl.addNote(note);
     }
 
     if(kb.sendToSynth){
-    // console.log(kb.sendToSynth, notesDown)
-      internalSynth.playNote(notesDown);
+      // console.log(kb.sendToSynth, notesDown)
+      // internalSynth.playNote(notesDown);
     }
 
     const obj = {
@@ -102,7 +100,6 @@
         module: tl.moduleName
       },
     };
-
     sendSocket(obj);
   }
 
@@ -136,6 +133,13 @@
     // console.log(idx);
   }
 
+  function sendReset(e){
+    const obj = {
+      type: "reset"
+    };
+    sendSocket(obj);
+  }
+
   function moduleChange(e){
     console.log(modules[moduleSelect]);
   }
@@ -163,7 +167,6 @@
   function dropEvt(e){
     e.preventDefault();
     e.stopPropagation();
-    console.log(e);
   }
 
   function sendSynth(){
@@ -179,13 +182,20 @@
 <main>
   <!-- <TouchComponent /> -->
 
-  <WSConnect on:tempo={(e) => tempo = e.detail} on:saveState={saveState} bind:this={WSConnection} />
-  <span>BPM: {tempo}</span>
+  <WSConnect 
+    on:tempo={(e) => tempo = e.detail} 
+    on:saveState={saveState} 
+    bind:this={WSConnection} 
+    />
+  <span>BPM: 
+    <input id="bpminp" type="number" on:change={sendTempo} bind:value={tempo} />
+  </span>
   <input type="range" on:mouseup={sendTempo} bind:value={tempo} min="10" max="200" />
+  
   <span>Swing: {swing}</span>
   <input type="range" on:mouseup={sendSwing} bind:value={swing} min=".5" max="1" />
   
-  <Midi on:sendNote={(e) => sendNote(e)} />
+  <Midi on:sendNote={(e) => kb.midiNote(e)} />
 
   <input bind:this={fr} type="file" />
   
@@ -201,6 +211,8 @@
   -->
 
   <input type="submit" value="panic" on:click={(e) => sendPanic()}>
+  <input type="submit" value="reset" on:click={(e) => sendReset()}>
+
   <input type="submit" value="disable" on:click={(e) => sendDisableToggle()}>
   <!-- <input type="text" bind:value={host} /> -->
   <!-- <div id="connect" on:click={setSocket(host)}>connect</div> -->
@@ -212,11 +224,19 @@
     on:click={e => selectRow(key)} />
   {/each}
 
-  <Keyboard bind:this={kb} on:keysEvt={sendNote} on:sendSynth={sendSynth} on:keyUp={sendNote} />
+  <Keyboard 
+    bind:this={kb} 
+    on:keysEvt={sendNote} 
+    on:sendSynth={sendSynth}
+    on:keyUp={sendNote} />
+
   <Synth bind:this={internalSynth} />
 </main>
 
 <style>
+  #bpminp{
+    width: 40px;
+  }
   #connect {
     cursor: pointer;
     user-select: none;
